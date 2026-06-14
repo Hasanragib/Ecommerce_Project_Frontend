@@ -3,8 +3,15 @@ import { useApp } from "../contexts/AppContext";
 import { Link } from "react-router-dom";
 
 export default function Profile() {
-  const { user, logoutUser, orders, triggerAlert, addresses, addAddress } =
-    useApp();
+  const {
+    user,
+    logoutUser,
+    orders,
+    triggerAlert,
+    addresses,
+    addAddress,
+    loginUser, // ✅ added
+  } = useApp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +24,20 @@ export default function Profile() {
     state: "",
     pincode: "",
   });
+
+  // ✅ Added - was completely missing
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      triggerAlert("Please enter email and password.");
+      return;
+    }
+    const success = await loginUser(email, password);
+    if (success) {
+      setEmail("");
+      setPassword("");
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -39,9 +60,7 @@ export default function Profile() {
       triggerAlert("Pincode must be exactly 6 digits.");
       return;
     }
-
-    await addAddress(newAddress); // ✅ delegates to AppContext
-
+    await addAddress(newAddress);
     setNewAddress({
       title: "",
       street: "",
@@ -71,7 +90,9 @@ export default function Profile() {
           <p className="text-muted small mb-4">
             Enter details to view dashboards and checkout details.
           </p>
-          <form className="text-start">
+          <form className="text-start" onSubmit={handleLoginSubmit}>
+            {" "}
+            {/* ✅ added onSubmit */}
             <div className="mb-3">
               <label className="form-label small text-muted fw-bold text-uppercase">
                 Email Address
@@ -118,7 +139,6 @@ export default function Profile() {
       <div className="row g-5">
         {/* LEFT COLUMN: Identity & Addresses */}
         <div className="col-12 col-lg-4">
-          {/* User Identity Card */}
           <div className="card p-4 border-0 bg-light rounded-4 text-center mb-4 shadow-sm">
             <div className="display-3 mb-2">👤</div>
             <h4 className="fw-bold text-dark mb-1">{user.name}</h4>
@@ -144,7 +164,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Address Section Header */}
+          {/* Address Section */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h5 className="fw-bold text-secondary mb-0 fs-6 text-uppercase">
               Saved Destinations
@@ -157,7 +177,6 @@ export default function Profile() {
             </button>
           </div>
 
-          {/* Add Address Form */}
           {showForm && (
             <form
               onSubmit={handleAddAddressSubmit}
@@ -236,7 +255,6 @@ export default function Profile() {
             </form>
           )}
 
-          {/* ✅ Address List — from AppContext, not user state */}
           <div className="d-flex flex-column gap-2">
             {addresses.length > 0 ? (
               addresses.map((addr) => (
