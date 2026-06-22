@@ -10,9 +10,12 @@ export default function Profile() {
     triggerAlert,
     addresses,
     addAddress,
-    loginUser, // ✅ added
+    loginUser, 
+    signupUser, 
   } = useApp();
 
+  const [isSignUp, setIsSignUp] = useState(false); // Mode toggler state
+  const [name, setName] = useState(""); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -25,24 +28,37 @@ export default function Profile() {
     pincode: "",
   });
 
-  // ✅ Added - was completely missing
-  const handleLoginSubmit = async (e) => {
+  const handleAuthSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       triggerAlert("Please enter email and password.");
       return;
     }
-    const success = await loginUser(email, password);
-    if (success) {
-      setEmail("");
-      setPassword("");
+
+    if (isSignUp) {
+      if (!name) {
+        triggerAlert("Please enter your full name.");
+        return;
+      }
+      const success = await signupUser(name, email, password);
+      if (success) {
+        setName("");
+        setEmail("");
+        setPassword("");
+      }
+    } else {
+      const success = await loginUser(email, password);
+      if (success) {
+        setEmail("");
+        setPassword("");
+      }
     }
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewAddress((prev) => ({ ...prev, [name]: value }));
-  };
+  const { name, value } = e.target;
+  setNewAddress((prev) => ({ ...prev, [name]: value })); // Use lowercase 'setNewAddress'
+};
 
   const handleAddAddressSubmit = async (e) => {
     e.preventDefault();
@@ -73,7 +89,7 @@ export default function Profile() {
   };
 
   // =========================================================================
-  // GATEWAY CHECK
+  // GATEWAY CHECK (HANDLES LOGIN & SIGNUP SEAMLESSLY)
   // =========================================================================
   if (!user) {
     return (
@@ -85,14 +101,31 @@ export default function Profile() {
           className="card p-4 shadow-lg border-0 rounded-4 bg-light text-center"
           style={{ maxWidth: "420px", width: "100%" }}
         >
-          <div className="display-4 mb-2">🔐</div>
-          <h3 className="fw-black text-dark mb-1">Login</h3>
+          <div className="display-4 mb-2">{isSignUp ? "📝" : "🔐"}</div>
+          <h3 className="fw-black text-dark mb-1">{isSignUp ? "Register" : "Login"}</h3>
           <p className="text-muted small mb-4">
-            Enter details to view dashboards and checkout details.
+            {isSignUp 
+              ? "Create an account." 
+              : "Enter login details."}
           </p>
-          <form className="text-start" onSubmit={handleLoginSubmit}>
-            {" "}
-            {/* ✅ added onSubmit */}
+          <form className="text-start" onSubmit={handleAuthSubmit}>
+            
+            {isSignUp && (
+              <div className="mb-3">
+                <label className="form-label small text-muted fw-bold text-uppercase">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  className="form-control rounded-3 py-2"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
             <div className="mb-3">
               <label className="form-label small text-muted fw-bold text-uppercase">
                 Email Address
@@ -106,6 +139,7 @@ export default function Profile() {
                 required
               />
             </div>
+            
             <div className="mb-4">
               <label className="form-label small text-muted fw-bold text-uppercase">
                 Security Password
@@ -119,12 +153,29 @@ export default function Profile() {
                 required
               />
             </div>
+
             <button
               type="submit"
-              className="btn btn-primary w-100 py-2 rounded-pill fw-bold text-uppercase shadow-sm"
+              className="btn btn-primary w-100 py-2 rounded-pill fw-bold text-uppercase shadow-sm mb-3"
             >
-              Sign In
+              {isSignUp ? "Create Account" : "Sign In"}
             </button>
+
+            <p className="text-center small text-muted mb-0">
+              {isSignUp ? "Already have an account?" : "New to our platform?"}{" "}
+              <span
+                className="text-primary fw-bold cursor-pointer"
+                style={{ cursor: "pointer", textDecoration: "underline" }}
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setName("");
+                  setEmail("");
+                  setPassword("");
+                }}
+              >
+                {isSignUp ? "Sign In here" : "Create an account"}
+              </span>
+            </p>
           </form>
         </div>
       </div>

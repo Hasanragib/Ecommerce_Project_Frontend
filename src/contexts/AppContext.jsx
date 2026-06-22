@@ -44,7 +44,53 @@ export function AppProvider({ children }) {
   // AUTHENTICATION FUNCTIONALITY CORE
   // =========================================================================
 
-  // 1. Login Function: Fires network requests to Express, then saves sessions
+  // 1. Signup Function: Fires network requests to Express to register a new user.
+  const signupUser = async (name, email, password) => {
+    setLoading(true);
+    try {
+      const res = await apiRequest("/api/auth/signup", "POST", {
+        name,
+        email,
+        password,
+      });
+
+      if (res && res.success) {
+        const userData = res.user;
+        const userToken = res.token;
+
+        if (!userData && !userToken) {
+          throw new Error("Missing credentials in server response.");
+        }
+
+        // Save to browser memory so state survives page refreshes
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", userToken);
+
+        // Hydrate App React State
+        setToken(userToken);
+        setUser(userData);
+
+        triggerAlert(
+          "Account created! Welcome, " + (userData.name || "User") + "!",
+        );
+        return true;
+      } else {
+        throw new Error(
+          res.message || "Failed to process account registration.",
+        );
+      }
+    } catch (err) {
+      console.error("Signup failure trace details:", err);
+      triggerAlert(
+        err.message || "Registration failed. Please check your inputs.",
+      );
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Login Function: Fires network requests to Express, then saves sessions
   const loginUser = async (email, password) => {
     setLoading(true);
     try {
@@ -88,7 +134,7 @@ export function AppProvider({ children }) {
     }
   };
 
-  // 2. Logout Function: Clears memory streams completely
+  // 3. Logout Function: Clears memory streams completely
   const logoutUser = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
@@ -286,6 +332,7 @@ export function AppProvider({ children }) {
         sortBy,
         setSortBy,
         clearFilters,
+        signupUser,
         loginUser,
         logoutUser,
         addToCart,
