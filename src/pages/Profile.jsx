@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../contexts/AppContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Profile() {
   const {
@@ -10,12 +10,14 @@ export default function Profile() {
     triggerAlert,
     addresses,
     addAddress,
-    loginUser, 
-    signupUser, 
+    loginUser,
+    signupUser,
   } = useApp();
 
+  const navigate = useNavigate();
+
   const [isSignUp, setIsSignUp] = useState(false); // Mode toggler state
-  const [name, setName] = useState(""); 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -42,23 +44,35 @@ export default function Profile() {
       }
       const success = await signupUser(name, email, password);
       if (success) {
+        if (logoutUser) {
+          await logoutUser();
+        }
+
+        // Clearing out the state after successful signup.
         setName("");
         setEmail("");
         setPassword("");
+        // Instead of auto-logging in, flip back to the login card layout
+
+        triggerAlert(
+          "Registration successful! Please log in with your credentials.",
+        );
+        setIsSignUp(false);
       }
     } else {
       const success = await loginUser(email, password);
       if (success) {
         setEmail("");
         setPassword("");
+
+        navigate("/");
       }
     }
   };
-
   const handleInputChange = (e) => {
-  const { name, value } = e.target;
-  setNewAddress((prev) => ({ ...prev, [name]: value })); // Use lowercase 'setNewAddress'
-};
+    const { name, value } = e.target;
+    setNewAddress((prev) => ({ ...prev, [name]: value })); // Use lowercase 'setNewAddress'
+  };
 
   const handleAddAddressSubmit = async (e) => {
     e.preventDefault();
@@ -102,14 +116,13 @@ export default function Profile() {
           style={{ maxWidth: "420px", width: "100%" }}
         >
           <div className="display-4 mb-2">{isSignUp ? "📝" : "🔐"}</div>
-          <h3 className="fw-black text-dark mb-1">{isSignUp ? "Register" : "Login"}</h3>
+          <h3 className="fw-black text-dark mb-1">
+            {isSignUp ? "Register" : "Login"}
+          </h3>
           <p className="text-muted small mb-4">
-            {isSignUp 
-              ? "Create an account." 
-              : "Enter login details."}
+            {isSignUp ? "Create an account." : "Enter login details."}
           </p>
           <form className="text-start" onSubmit={handleAuthSubmit}>
-            
             {isSignUp && (
               <div className="mb-3">
                 <label className="form-label small text-muted fw-bold text-uppercase">
@@ -139,7 +152,7 @@ export default function Profile() {
                 required
               />
             </div>
-            
+
             <div className="mb-4">
               <label className="form-label small text-muted fw-bold text-uppercase">
                 Security Password
